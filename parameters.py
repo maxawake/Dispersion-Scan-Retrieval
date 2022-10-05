@@ -22,7 +22,7 @@ offset_rough = 33 # [px]
 stepsize_rough = 0.278e-9 #[m/px]
 central_wavelength_rough = 750e-9 #[m]
 
-glass_stepsize = 0.51e-3/2 # [m]
+glass_stepsize = 0.51e-3#/2 # [m]
 glass_steps = 141 # [steps]
 
 omega_end = delta_w*128

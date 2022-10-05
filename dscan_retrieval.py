@@ -12,7 +12,7 @@ plt.rcParams["figure.figsize"] = (8, 6)
 
 
 class Dscan:
-    def __init__(self, filepath):
+    def __init__(self, filepath, start, end):
         """Constructor of the retrieval
 
         Args:
@@ -38,18 +38,35 @@ class Dscan:
         self.omega_data = (2*np.pi*c) / self.wl_rough
         self.omega_fine = (2*np.pi*c) / self.wl_fine
 
+        delta = np.abs(self.omega_data[-1] - self.omega_data[0])/2
+
+        start = self.omega_data[-1]+start*delta
+        end = self.omega_data[0]-end*delta
+
+        print(start*h_bar/eV, end*h_bar/eV)
+
+        self.exclude_end = np.argwhere(self.omega_data >= start)[-1,0]
+        self.exclude_start = np.argwhere(self.omega_data <= end)[0,0]
+
+        print(self.omega_data[self.exclude_start]*h_bar/eV, self.omega_data[self.exclude_end]*h_bar/eV)
+
+        self.omega_data = self.omega_data[self.exclude_start:self.exclude_end]
+        print(self.omega_data*h_bar/eV)
+        self.amplitude_lambda = self.amplitude_lambda[self.exclude_start:self.exclude_end]
+
         # Resample the nonlinear spaced spectrum on a linear grid
         self.amplitude_omega, self.omega_lin = self.resample_spectrum(
-            self.amplitude_lambda, self.omega_data, 5)
+            self.amplitude_lambda, self.omega_data, 10)
+
         # Calculate corresponding nonlinear wavelength grid
-        wl_nonlin = (2*np.pi*c) / self.omega_lin
+        self.wl_nonlin = (2*np.pi*c) / self.omega_lin
         
         # Find start and end indices of new linear array
         self.omega_start = np.argwhere(self.omega_lin >= self.omega_fine[-1])[0, 0]
         self.omega_end = np.argwhere(self.omega_lin <= self.omega_fine[0])[-1, 0]
 
         # Calculate wavevector from refractive index
-        n_omega = np.flip(self.refractive_index(wl_nonlin))
+        n_omega = np.flip(self.refractive_index(self.wl_nonlin))
         self.k_omega = n_omega*self.omega_lin/c
 
         # Initialize array for the response function
@@ -57,9 +74,6 @@ class Dscan:
         
         # Get count of workers
         self.workers = mp.cpu_count()
-        
-        # Helper variable for plotting
-        self.finished = False
 
     @staticmethod
     def calibration(pixels, offset, stepsize, wl0):
@@ -286,7 +300,7 @@ class Dscan:
 
         self.retrieved_values = solution.x
         self.retrieved_trace = self.simulate_trace(self.retrieved_values)
-        self.finished = True
+
         return self.retrieved_values, self.retrieved_trace
 
     def objective(self, retrieved, measured, lb, x):
