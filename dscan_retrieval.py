@@ -1,8 +1,6 @@
-from tkinter import W
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import fft
-import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize, approx_fprime
 from parameters import *
